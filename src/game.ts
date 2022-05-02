@@ -1,6 +1,6 @@
 import {Owner, PlayerInfo} from "./index";
 import {Base, Hero, Monster} from "./entities";
-import {MAP_HEIGHT, MAP_WIDTH} from "../consts";
+import {MAP_HEIGHT, MAP_WIDTH} from "./consts";
 
 export class Game {
     baseByPlayer = new Map<Owner, Base>();
