@@ -10,6 +10,7 @@ interface Point {
 export class Agent {
     game: Game;
     player: Owner;
+    offensiveMonsterIds = new Set<number>();
 
     constructor(game: Game, player: Owner) {
         this.game = game;
@@ -29,8 +30,47 @@ export class Agent {
 
         // Move each hero to the closest bug.
         const ourHeroes = Array.from(this.game.heroesById.values()).filter(hero => hero.owner & Owner.Me);
+        const opponentHeroes = Array.from(this.game.heroesById.values()).filter(hero => hero.owner & Owner.Opponent);
+
+        const offensiveMonsterIds = new Set<number>();
+
+        const myInfo = this.game.playerInfos.get(Owner.Me)!;
+
 
         for (const [i, hero] of ourHeroes.entries()) {
+            // Control opponent's heroes if possible
+            if (myInfo.mana >= 10) {
+                let castedSpell = false;
+                for (const enemyHero of opponentHeroes) {
+                    const enemyDistance = computeDistance(hero, enemyHero);
+                    if (enemyDistance <= 1280 && enemyHero.shieldLife === 0) {
+                        console.log(`SPELL WIND ${hero.id} ${otherBase.x} ${otherBase.y}`);
+                        myInfo.mana -= 10;
+                        castedSpell = true;
+                        break;
+                    }
+
+                    if (computeDistance(hero, enemyHero) <= 2200) {
+                        if (i === 0 && hero.shieldLife === 0) {
+                            console.log(`SPELL SHIELD ${hero.id}`);
+                            myInfo.mana -= 10;
+                            castedSpell = true;
+                            break;
+                        }
+
+                        // if (myInfo.mana >= 10 && enemyHero.shieldLife === 0) {
+                        //     console.log(`SPELL CONTROL ${enemyHero.id} ${otherBase.x} ${otherBase.y}`);
+                        //     myInfo.mana -= 10;
+                        //     castedSpell = true;
+                        //     break;
+                        // }
+                    }
+                }
+                if (castedSpell) {
+                    continue;
+                }
+            }
+
             let heroMaxDistance: number;
 
             const xd = 3438;
@@ -81,12 +121,33 @@ export class Agent {
 
                 const threat = threats[0];
 
-                // Check if we want to wind
-                if (this.game.playerInfos.get(Owner.Me)!.mana >= 10) {
-                    if (i === 0 && computeDistance(hero, threat) <= 1280) {
+                if (myInfo.mana >= 10) {
+                    // if (i === 0 && hero.shieldLife === 0) {
+                    //     console.log(`SPELL SHIELD ${hero.id}`);
+                    //     myInfo.mana -= 10;
+                    //     continue;
+                    // }
+
+                    // Check if we want to wind
+                    if (i === 0 && computeDistance(hero, threat) <= 1280 &&
+                        (distanceByMonster.get(threat)! <= importantDistance ||
+                        myInfo.mana >= 70
+                        )
+                    ) {
                         console.log(`SPELL WIND ${otherBase.x} ${otherBase.y}`);
+                        myInfo.mana -= 10;
                         continue;
                     }
+
+                    // if (i === 0 && threat.shieldLife === 0 &&
+                    //     computeDistance(hero, threat) <= 2200 &&
+                    //     myInfo.mana >= 70
+                    // ) {
+                    //     console.log(`SPELL CONTROL ${threat.id} ${otherBase.x} ${otherBase.y}`);
+                    //     myInfo.mana -= 10;
+                    //     offensiveMonsterIds.add(threat.id);
+                    //     continue;
+                    // }
                 }
 
                 console.log(`MOVE ${threat.x} ${threat.y}`);
