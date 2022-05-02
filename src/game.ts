@@ -1,5 +1,6 @@
 import {Owner, PlayerInfo} from "./index";
 import {Base, Hero, Monster} from "./entities";
+import {MAP_HEIGHT, MAP_WIDTH} from "../consts";
 
 export class Game {
     baseByPlayer = new Map<Owner, Base>();
@@ -23,21 +24,28 @@ export class Game {
         // Read base coordinates
         const ourCoords = readline().split(" ").map(Number);
         const ourBase = new Base(Owner.Me, ourCoords[0], ourCoords[1]);
+        const otherBase = new Base(Owner.Opponent, MAP_WIDTH - ourBase.x, MAP_HEIGHT - ourBase.y);
 
         this.baseByPlayer.set(Owner.Me, ourBase);
+        this.baseByPlayer.set(Owner.Opponent, otherBase);
 
         this.numHeroesPerPlayer = parseInt(readline());
     }
 
     read_turn() {
-        const healths = readline().split(" ").map(Number);
-        const manas = readline().split(" ").map(Number);
+        const myInput = readline().split(" ").map(Number);
+        const opponentInput = readline().split(" ").map(Number);
 
         // Update player infos
         for (const [i, player] of [Owner.Me, Owner.Opponent].entries()) {
             const playerInfo = this.playerInfos.get(player)!;
-            playerInfo.health = healths[i];
-            playerInfo.mana = manas[i];
+            if (i === 0) {
+                playerInfo.health = myInput[0];
+                playerInfo.mana = myInput[1];
+            } else {
+                playerInfo.health = opponentInput[0];
+                playerInfo.mana = opponentInput[1];
+            }
         }
 
         this.baseByPlayer.get(Owner.Me);
